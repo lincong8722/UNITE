@@ -46,6 +46,11 @@ def get_cluster_coordinates_v2(filename):
     with open(filename, 'r') as file:
         lines = file.readlines()
 
+    # 检查文件是否至少有28行
+    if len(lines) < 28:
+        warnings.warn(f"Does not have cluster in thalamus")
+        return 0, 0, 0, 0
+
     # 定位到文件的第28行并提取相关信息
     cluster_line = lines[27].strip()
 
@@ -69,11 +74,12 @@ def get_cluster_coordinates_v2(filename):
             return max_FC_coords[0],max_FC_coords[1],max_FC_coords[2], max_FC_max
         else:
             print("All FC max values are not positive.")
-            return np.nan, np.nan, np.nan, np.nan
+            return 0, 0, 0, 0
 
     else:
         print("cluster1 not found in the file.")
-        return np.nan, np.nan, np.nan, np.nan
+        warnings.warn(f"Does not have cluster in thalamus")
+        return 0, 0, 0, 0
 
 def compute_centroid(matrix):
     """
@@ -413,107 +419,22 @@ class VIM_SCAN_TargetPlanner(Planner):
         return target_fc_file, target_data, fs6_target_data
 
     def __target_search(self, subj):
-        # # lh
-        # if self.verbose:
-        #     lh_fs6_candi_heatmap = np.full((self.lh_fs6_n_vertex), -1.0)
-        #     tmp_candi_idx = self.lh_fs6_candi_mask == 1
-        #     lh_fs6_candi_heatmap[tmp_candi_idx] = self.lh_fs6_heatmap[tmp_candi_idx]
-        #     lh_fs6_pial_mesh = self.lh_fs6_pial_mesh.copy()
-        #     lh_fs6_pial_mesh.point_data['label'] = lh_fs6_candi_heatmap.copy()
-        #     lh_fs6_pial_mesh.save(self.logdir / 'lh_fs6_candi_heatmap.vtk')
-
-        # lh_candi_heatmap = np.full_like(self.lh_candi_mask, -1.0)
-        # tmp_candi_idx = self.lh_candi_mask == 1
-        # lh_candi_heatmap[tmp_candi_idx] = self.lh_heatmap[tmp_candi_idx]
-        # if self.verbose:
-        #     lh_pial_mesh = self.lh_pial_mesh.copy()
-        #     lh_pial_mesh.point_data['label'] = lh_candi_heatmap.copy()
-        #     lh_pial_mesh.save(self.logdir / 'lh_candi_heatmap.vtk')
-
-        # lh_heatmap_mesh = self.lh_pial_mesh.copy()
-        # lh_heatmap_mesh.point_data['label'] = lh_candi_heatmap.copy()
-        # self.lh_targets = self.cluster_target_search(lh_heatmap_mesh, self.heatmap_percentile)
-        # for i, target_dict in enumerate(self.lh_targets):
-        #     lh_target_idx = target_dict['index']
-        #     lh_target_fc_file, lh_target, lh_fs6_target = self.__set_target(lh_target_idx, i, subj, 'lh')
-        #     lh_target_fc = nib.load(lh_target_fc_file).get_fdata().flatten()
-
-        #     if self.verbose:
-        #         lh_fs6_pial_mesh = self.lh_fs6_pial_mesh.copy()
-        #         lh_fs6_pial_mesh.point_data['label'] = lh_fs6_target.copy()
-        #         lh_fs6_pial_mesh.save(self.logdir / f'lh_fs6_target{i}.vtk')
-        #         lh_pial_mesh = self.lh_pial_mesh.copy()
-        #         lh_pial_mesh.point_data['label'] = lh_target.copy()
-        #         lh_pial_mesh.save(self.logdir / f'lh_target{i}.vtk')
-        #         lh_pial_mesh.point_data['label'] = lh_target_fc.copy()
-        #         lh_pial_mesh.save(self.logdir / f'lh_target{i}_fc.vtk')
-
-        # # rh
-        # if self.verbose:
-        #     rh_fs6_candi_heatmap = np.full((self.rh_fs6_n_vertex), -1.0)
-        #     tmp_candi_idx = self.rh_fs6_candi_mask == 1
-        #     rh_fs6_candi_heatmap[tmp_candi_idx] = self.rh_fs6_heatmap[tmp_candi_idx]
-        #     rh_fs6_pial_mesh = self.rh_fs6_pial_mesh.copy()
-        #     rh_fs6_pial_mesh.point_data['label'] = rh_fs6_candi_heatmap.copy()
-        #     rh_fs6_pial_mesh.save(self.logdir / 'rh_fs6_candi_heatmap.vtk')
-
-        # rh_candi_heatmap = np.full_like(self.rh_candi_mask, -1.0)
-        # tmp_candi_idx = self.rh_candi_mask == 1
-        # rh_candi_heatmap[tmp_candi_idx] = self.rh_heatmap[tmp_candi_idx]
-        # if self.verbose:
-        #     rh_pial_mesh = self.rh_pial_mesh.copy()
-        #     rh_pial_mesh.point_data['label'] = rh_candi_heatmap.copy()
-        #     rh_pial_mesh.save(self.logdir / 'rh_candi_heatmap.vtk')
-
-        # rh_heatmap_mesh = self.rh_pial_mesh.copy()
-        # rh_heatmap_mesh.point_data['label'] = rh_candi_heatmap.copy()
-        # self.rh_targets = self.cluster_target_search(rh_heatmap_mesh, self.heatmap_percentile)
-        # for i, target_dict in enumerate(self.rh_targets):
-        #     rh_target_idx = target_dict['index']
-        #     rh_target_fc_file, rh_target, rh_fs6_target = self.__set_target(rh_target_idx, i, subj, 'rh')
-        #     rh_target_fc = nib.load(rh_target_fc_file).get_fdata().flatten()
-
-        #     if self.verbose:
-        #         rh_fs6_pial_mesh = self.rh_fs6_pial_mesh.copy()
-        #         rh_fs6_pial_mesh.point_data['label'] = rh_fs6_target.copy()
-        #         rh_fs6_pial_mesh.save(self.logdir / f'rh_fs6_target{i}.vtk')
-        #         rh_pial_mesh = self.rh_pial_mesh.copy()
-        #         rh_pial_mesh.point_data['label'] = rh_target.copy()
-        #         rh_pial_mesh.save(self.logdir / f'rh_target{i}.vtk')
-        #         rh_pial_mesh.point_data['label'] = rh_target_fc.copy()
-        #         rh_pial_mesh.save(self.logdir / f'rh_target{i}_fc.vtk')
-
-        # (1) 找到FC最强点坐标
-        # max_value_position = np.unravel_index(np.argmax(fc_vol_hemi), fc_vol_hemi.shape)
-        # 根据聚类结果找到最大聚类中心
-        # max_value_position = find_max_avg_corr_cluster_coords(fc_vol_hemi, 5)
-        # # 根据mri_volcluster 聚类结果找到最大聚类中心
-        # cluster_mask_file = f'{result_save_path}/{sub}_{hemi}_cluster_mask.nii.gz'
-        # cluster_label_file = f'{result_save_path}/{sub}_{hemi}_cluster_label.nii.gz'
-        # cluster_stats_file = f'{result_save_path}/{sub}_{hemi}_cluster_stats.txt'
 
         ## lh
         cluster_mask_file = self.workdir / 'lh_VIM_MNI152NLin6Asym_2mm_cluster_mask.nii.gz'
         cluster_label_file = self.workdir / 'lh_VIM_MNI152NLin6Asym_2mm_cluster_label.nii.gz'
         cluster_stats_file = self.workdir / 'lh_VIM_MNI152NLin6Asym_2mm_cluster_stats.txt'
-        # shargs = [
-        #     '--in', self.lh_fs6_lang_fc_file,
-        #     '--sum', cluster_stats_file,
-        #     '--out', cluster_mask_file,
-        #     '--ocn', cluster_label_file,
-        #     # '--sign', 'pos',
-        #     '--thmin', '0.3',  # 可以根据需要调整
-        #     '--thmax', '0.6',  # 可以根据需要调整
-        #     '--minsize', '50']
-        thmax = np.max(self.lh_fs6_lang_fc) 
-        thmin = thmax * 0.5
-
-        # thmax = 0.6
-        # thmin = 0.3
         
+        # thmax = np.max(self.lh_fs6_lang_fc) 
+        # thmin = thmax * 0.5
+
+        thmax = 0.6 # 可以根据需要调整，不同数据集可能需要不同的阈值
+        thmin = 0.3 # 可以根据需要调整，不同数据集可能需要不同的阈值
+        minsize = 50 # 可以根据需要调整，不同数据集可能需要不同的阈值
+
         if thmax > 0:
             # sh.mri_volcluster(*shargs, _out=sys.stdout)
-            cmd = f"mri_volcluster --in {self.lh_fs6_lang_fc_file} --sum {cluster_stats_file} --out {cluster_mask_file} --ocn {cluster_label_file} --thmin {thmin} --thmax {thmax} > /dev/null"
+            cmd = f"mri_volcluster --in {self.lh_fs6_lang_fc_file} --sum {cluster_stats_file} --out {cluster_mask_file} --ocn {cluster_label_file} --thmin {thmin} --thmax {thmax} --minsize {minsize} > /dev/null"
             os.system(cmd)
 
             Optimal_target_and_maxFC = get_cluster_coordinates_v2(cluster_stats_file)
@@ -549,39 +470,20 @@ class VIM_SCAN_TargetPlanner(Planner):
         # self.lh_targets = [(Optimal_target, FC_max)]
         self.lh_targets = [{'index': Optimal_target, 'score': FC_max}]
 
-
-        # # save cluster centroid
-        # tmp_data = np.zeros_like(self.fs6_lang_fc)
-        # for i, (coord, fc) in enumerate(zip(centroid_list, fc_list)):
-        #     coord = int(coord[0]+0.5), int(coord[1]+0.5), int  (coord[2]+0.5)
-        #     tmp_data[tuple(coord)] = (1+1)
-
-        # tmp_data_path = f"{self.workdir}/lh_cluster_centroid.nii.gz"
-        # save_nii(tmp_data, tmp_data_path, template=self.resource_dir / 'VIM_MNI152NLin6Asym_2mm_nn.nii.gz')
-
         ## rh
         cluster_mask_file = self.workdir / 'rh_VIM_MNI152NLin6Asym_2mm_cluster_mask.nii.gz'
         cluster_label_file = self.workdir / 'rh_VIM_MNI152NLin6Asym_2mm_cluster_label.nii.gz'
         cluster_stats_file = self.workdir / 'rh_VIM_MNI152NLin6Asym_2mm_cluster_stats.txt'
-        # shargs = [
-        #     '--in', self.rh_fs6_lang_fc_file,
-        #     '--sum', cluster_stats_file,
-        #     '--out', cluster_mask_file,
-        #     '--ocn', cluster_label_file,
-        #     # '--sign', 'pos',
-        #     '--thmin', '0.3',  # 可以根据需要调整
-        #     '--thmax', '0.6',  # 可以根据需要调整
-        #     '--minsize', '50']
-        # sh.mri_volcluster(*shargs, _out=sys.stdout)
 
-        thmax = np.max(self.rh_fs6_lang_fc)
-        thmin = thmax * 0.5
+        # thmax = np.max(self.rh_fs6_lang_fc)
+        # thmin = thmax * 0.5
 
-        # thmax = 0.6
-        # thmin = 0.3
+        thmax = 0.6 # 可以根据需要调整，不同数据集可能需要不同的阈值
+        thmin = 0.3 # 可以根据需要调整，不同数据集可能需要不同的阈值
+        minsize = 50 # 可以根据需要调整，不同数据集可能需要不同的阈值
 
         if thmax > 0:
-            cmd = f"mri_volcluster --in {self.rh_fs6_lang_fc_file} --sum {cluster_stats_file} --out {cluster_mask_file} --ocn {cluster_label_file} --thmin {thmin} --thmax {thmax} --minsize 50 > /dev/null"
+            cmd = f"mri_volcluster --in {self.rh_fs6_lang_fc_file} --sum {cluster_stats_file} --out {cluster_mask_file} --ocn {cluster_label_file} --thmin {thmin} --thmax {thmax} --minsize {minsize} > /dev/null"
             os.system(cmd)
 
             Optimal_target_and_maxFC = get_cluster_coordinates_v2(cluster_stats_file)
@@ -617,14 +519,6 @@ class VIM_SCAN_TargetPlanner(Planner):
         # self.rh_targets = [(Optimal_target, FC_max)]
         self.rh_targets = [{'index': Optimal_target, 'score': FC_max}]
 
-        # # save cluster centroid
-        # tmp_data = np.zeros_like(self.fs6_lang_fc)
-        # for i, (coord, fc) in enumerate(zip(centroid_list, fc_list)):
-        #     coord = int(coord[0]+0.5), int(coord[1]+0.5), int  (coord[2]+0.5)
-        #     tmp_data[tuple(coord)] = (1+1)
-
-        # tmp_data_path = f"{self.workdir}/rh_cluster_centroid.nii.gz"
-        # save_nii(tmp_data, tmp_data_path, template=self.resource_dir / 'VIM_MNI152NLin6Asym_2mm_nn.nii.gz')
 
     def __get_target_info(self, subject):
         '''
