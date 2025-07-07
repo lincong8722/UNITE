@@ -65,6 +65,7 @@ Run the following command:
 4. Run UNITE
 ~~~~~~~~~~~~
 Replace ``<your_local_directory>`` with your working directory path.
+
 **Using GPU:**
 
 .. code-block:: bash
@@ -82,7 +83,7 @@ Replace ``<your_local_directory>`` with your working directory path.
 5. Launch UNITE GUI or use command-line mode
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 - **GUI**: Open your browser and go to: `http://localhost:8501 <http://localhost:8501>`_
-- **Command-line**: Refer to below command.
+- **Command-line**: Refer to below command. Note: <fs_license_file> – the directory that contains a valid FreeSurfer license.
 
 .. code-block:: bash
 
@@ -90,7 +91,7 @@ Replace ``<your_local_directory>`` with your working directory path.
                  -v <bids_dir>:/input \
                  -v <output_dir>:/output \
                  -v <fs_license_file>:/fs_license.txt \
-                 pbfslab/deepprep:target.25.1.1 \
+                 pbfslab/unite:target.25.1.1 \
                  /input \
                  /output \
                  participant \
