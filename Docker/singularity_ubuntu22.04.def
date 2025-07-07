@@ -1,0 +1,34 @@
+Bootstrap: docker-daemon
+From: pbfslab/deepprep:25.1.0
+Stage: build
+
+%files
+    Docker/singularity_ubuntu22.04.def /singularity_ubuntu22.04.def
+
+%environment
+    export FREESURFER_HOME=/opt/freesurfer
+
+%post
+    NOW=`date`
+    echo "export NOW=\"${NOW}\"" >> $SINGULARITY_ENVIRONMENT
+
+%runscript
+    echo "Container was created $NOW. Version: 25.1.0"
+    echo "Arguments received: $*"
+    exec /opt/DeepPrep/deepprep/preprocess.sh "$@"
+
+%test
+    grep -q NAME=\"Ubuntu\" /etc/os-release
+    if [ $? -eq 0 ]; then
+        echo "Container base is Ubuntu as expected."
+    else
+        echo "Container base is not Ubuntu."
+        exit 1
+    fi
+
+%labels
+    Author anning@cpl.ac.cn
+    Version 25.1.0
+
+%help
+    This is a DeepPrep container used to preprocess sMRI and fMRI
