@@ -34,7 +34,7 @@ def get_cluster_coordinates_v2(filename):
     """
     选择面积最大的cluster的中心点作为OptimalTarget
 
-    从指定的cluster_stats.txt文件中读取cluster1的中心坐标。
+    从指定的cluster_stats.txt文件中读取cluster中FC最大点的坐标。
 
     参数:
     filename (str): cluster_stats.txt文件的路径。
@@ -54,24 +54,26 @@ def get_cluster_coordinates_v2(filename):
     # 定位到文件的第28行并提取相关信息
     cluster_line = lines[27].strip()
 
-    max_FC_max = -np.inf
-    max_FC_coords = np.nan, np.nan, np.nan
+    max_volsize_max = -np.inf
+    max_volsize_coords = np.nan, np.nan, np.nan
+    FC_value = np.nan
 
-    # 遍历每一行以找到FC max值最大的cluster的坐标
+    # 遍历每一行以找到体积最大的cluster的坐标
     if cluster_line:
         for line in lines[27:]:
             parts = line.strip().split()
-            FC_max = float(parts[6].replace(',', ''))
+            volsize_max = float(parts[1].replace(',', ''))
 
-            if FC_max > max_FC_max:
-                max_FC_max = FC_max
+            if volsize_max > max_volsize_max:
+                max_volsize_max = volsize_max
+                FC_value = float(parts[6].replace(',', ''))
                 VoxX = float(parts[3].replace(',', ''))
                 VoxY = float(parts[4].replace(',', ''))
                 VoxZ = float(parts[5].replace(',', ''))
-                max_FC_coords = VoxX, VoxY, VoxZ
+                max_volsize_coords = VoxX, VoxY, VoxZ
 
-        if max_FC_max > 0:
-            return max_FC_coords[0],max_FC_coords[1],max_FC_coords[2], max_FC_max
+        if FC_value > 0:
+            return max_volsize_coords[0],max_volsize_coords[1],max_volsize_coords[2], FC_value
         else:
             print("All FC max values are not positive.")
             return 0, 0, 0, 0
@@ -262,6 +264,9 @@ class VIM_SCAN_TargetPlanner(Planner):
         self.VIM_mask_MNI152NLin6Asym_2mm_nn = VIM_mask.copy()
 
         self.lh_fs6_lang_fc = self.compute_vol_fc_with_mask(seed_vector, self.vol_bold, mask=VIM_mask) ## just calculate the fc map in VIM region
+        ## set negative values to zero
+        self.lh_fs6_lang_fc[self.lh_fs6_lang_fc < 0] = 0
+        ## save the fc map
         save_nii(self.lh_fs6_lang_fc, self.workdir / 'lh_VIM_SCAN_fc.nii.gz', template= self.resource_dir / 'lh_thalamus_MNINLin6Asym_2mm.nii.gz')
         self.lh_fs6_lang_fc_file = self.workdir / 'lh_VIM_SCAN_fc.nii.gz'
 
@@ -271,6 +276,9 @@ class VIM_SCAN_TargetPlanner(Planner):
         self.VIM_mask_MNI152NLin6Asym_2mm_nn = VIM_mask.copy()
 
         self.rh_fs6_lang_fc = self.compute_vol_fc_with_mask(seed_vector, self.vol_bold, mask=VIM_mask) ## just calculate the fc map in VIM region
+        ## set negative values to zero
+        self.rh_fs6_lang_fc[self.rh_fs6_lang_fc < 0] = 0
+        ## save the fc map
         save_nii(self.rh_fs6_lang_fc, self.workdir / 'rh_VIM_SCAN_fc.nii.gz', template= self.resource_dir / 'rh_thalamus_MNINLin6Asym_2mm.nii.gz')
         self.rh_fs6_lang_fc_file = self.workdir / 'rh_VIM_SCAN_fc.nii.gz'
 
@@ -430,14 +438,23 @@ class VIM_SCAN_TargetPlanner(Planner):
 
         thmax = 0.6 # 可以根据需要调整，不同数据集可能需要不同的阈值
         thmin = 0.3 # 可以根据需要调整，不同数据集可能需要不同的阈值
-        minsize = 50 # 可以根据需要调整，不同数据集可能需要不同的阈值
+        # minsize = 50 # 可以根据需要调整，不同数据集可能需要不同的阈值
+
+        thmin = 0.0001 ## 排除掉 0 的情况
 
         if thmax > 0:
             # sh.mri_volcluster(*shargs, _out=sys.stdout)
-            cmd = f"mri_volcluster --in {self.lh_fs6_lang_fc_file} --sum {cluster_stats_file} --out {cluster_mask_file} --ocn {cluster_label_file} --thmin {thmin} --thmax {thmax} --minsize {minsize} > /dev/null"
+            # cmd = f"mri_volcluster --in {self.lh_fs6_lang_fc_file} --sum {cluster_stats_file} --out {cluster_mask_file} --ocn {cluster_label_file} --thmin {thmin} --thmax {thmax} --minsize {minsize} > /dev/null"
+            cmd = f"mri_volcluster --in {self.lh_fs6_lang_fc_file} --sum {cluster_stats_file} --out {cluster_mask_file} --ocn {cluster_label_file} --thmin {thmin} > /dev/null"
             os.system(cmd)
 
             Optimal_target_and_maxFC = get_cluster_coordinates_v2(cluster_stats_file)
+            ## 手动计算最大cluster的几何中心
+            label_data = ants.image_read(str(cluster_label_file)).numpy()
+            label_data[label_data != 1] = 0
+            coord = compute_centroid(label_data)
+            coord = [int(coord[0] + 0.5), int(coord[1] + 0.5), int(coord[2] + 0.5)]
+            Optimal_target_and_maxFC = [coord[0], coord[1], coord[2], Optimal_target_and_maxFC[-1]]
         else:
             Optimal_target_and_maxFC = [0, 0, 0, 0]
         # ## 手动计算每个cluster的几何中心
@@ -480,15 +497,26 @@ class VIM_SCAN_TargetPlanner(Planner):
 
         thmax = 0.6 # 可以根据需要调整，不同数据集可能需要不同的阈值
         thmin = 0.3 # 可以根据需要调整，不同数据集可能需要不同的阈值
-        minsize = 50 # 可以根据需要调整，不同数据集可能需要不同的阈值
+        # minsize = 50 # 可以根据需要调整，不同数据集可能需要不同的阈值
+
+        thmin = 0.0001 ## 排除掉 0 的情况
 
         if thmax > 0:
-            cmd = f"mri_volcluster --in {self.rh_fs6_lang_fc_file} --sum {cluster_stats_file} --out {cluster_mask_file} --ocn {cluster_label_file} --thmin {thmin} --thmax {thmax} --minsize {minsize} > /dev/null"
+            # cmd = f"mri_volcluster --in {self.rh_fs6_lang_fc_file} --sum {cluster_stats_file} --out {cluster_mask_file} --ocn {cluster_label_file} --thmin {thmin} --thmax {thmax} --minsize {minsize} > /dev/null"
+            cmd = f"mri_volcluster --in {self.rh_fs6_lang_fc_file} --sum {cluster_stats_file} --out {cluster_mask_file} --ocn {cluster_label_file} --thmin {thmin} > /dev/null"
             os.system(cmd)
 
             Optimal_target_and_maxFC = get_cluster_coordinates_v2(cluster_stats_file)
+            ## 手动计算最大cluster的几何中心
+            label_data = ants.image_read(str(cluster_label_file)).numpy()
+            label_data[label_data != 1] = 0
+            coord = compute_centroid(label_data)
+            coord = [int(coord[0] + 0.5), int(coord[1] + 0.5), int(coord[2] + 0.5)]
+            Optimal_target_and_maxFC = [coord[0], coord[1], coord[2], Optimal_target_and_maxFC[-1]]
         else:
             Optimal_target_and_maxFC = [0, 0, 0, 0]
+        
+
         # ## 手动计算每个cluster的几何中心
         # centroid_list = []
         # fc_list = []
