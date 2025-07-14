@@ -91,12 +91,12 @@ Replace ``<your_local_directory>`` with your working directory path.
                  -v <bids_dir>:/input \
                  -v <output_dir>:/output \
                  -v <fs_license_file>:/fs_license.txt \
-                 pbfslab/unite:target.25.1.1 \
+                 pbfslab/unite:25.1.1 \
                  /input \
                  /output \
                  participant \
                  --fs_license_file /fs_license.txt \
-                 --target \ ‘Post-stroke cognition
+                 --target 'Post-stroke cognition'
 
 About
 -----
@@ -109,6 +109,7 @@ The following are main stages of the UNITE pipeline:
 
 
 The UNITE comprises six stages: data collection, data preparation, data processing, personalized functional circuits mapping, automated target planning and the generation of target, and quality control reports.
+
  | **a)** To ensure the reliability of personalized functional mapping for each participant, we collect at least one high-resolution T1w MRI and a minimum of 20 minutes of resting-state fMRI data. The field map is optional but recommended for correcting susceptibility-induced distortions. After data acquisition, all imaging data are converted into the Brain Imaging Data Structure (BIDS) format, using software packages, such as BIDScoin. The BIDS format can be verified through tools, such as the BIDS Validator (https://github.com/bids-standard/bids-validator) or custom scripts. Given that head motion is a major confound of fMRI data, particularly in patient populations, we recommend performing the quick head motion pre-screening module, QuickQC, prior to running the full protocol, to determine data usability.
  | **b)** To achieve efficient and robust preprocessing of neuroimaging data, we employ our recently developed pipeline, DeepPrep. This advanced preprocessing framework integrates several deep learning–based modules—including FastSurfer, FastCSR, SUGAR, and SynthMorph—to enhance both computational efficiency and robustness, particularly in clinical settings. The comprehensive workflow, consisting of 83 steps, is parallelized and orchestrated using the workflow management system Nextflow (https://www.nextflow.io), enabling streamlined execution. DeepPrep allows for fully automated preprocessing within 15 to 30 minutes, representing up to a 10-fold speed improvement over conventional pipelines such as fMRIPrep. The pipeline supports both CPU and GPU execution, with GPU acceleration recommended for optimal performance. To ensure flexibility and adaptability across diverse research environments, users can customize key processing parameters, including spatial smoothing kernel size, bandpass filtering settings, and the selection of confounds to regress out (e.g., head motion parameters, cerebrospinal fluid signal, white matter signal, and global signal).
  | **c)** To achieve reliable personalized functional parcellation, we employed an iterative precision functional mapping (PFM) approach, as described in our previous work. To meet the requirements of different clinical applications, we provide three options of cortical functional atlases by default: the Yeo’s 18-network atlas, Gordon’s 18-network atlas and a fine-grained 213-region atlas. The Yeo 18-network atlas is derived from the original 17-network atlas by further subdividing the lateral sensorimotor network into distinct hand and mouth networks6. The Gordon’s 18-netwok atlas comprises 17 canonical functional networks48 and a newly identified but important network, somato-cognitive action network (SCAN). The 213-region atlas is an in-house functional parcellation generated using a coarse-to-fine strategy. These personalized functional parcellation approaches have been widely used in personalized functional-guided rTMS studies and brain-symptom association studies. The personalized functional networks or regions define the initial search space for subsequent target localization.
