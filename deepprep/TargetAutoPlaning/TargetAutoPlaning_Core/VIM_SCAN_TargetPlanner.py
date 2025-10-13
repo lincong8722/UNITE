@@ -10,7 +10,6 @@ from scipy.spatial import KDTree
 from .planner import Planner, surf2mesh, mri_surf2surf, expand_mask, plot_target_on_sagittal_slice, concatenate_images, add_target_roi_mask_T1, mri_annot2annot, plot_target_on_coronal_slice
 import ants
 
-import sh, sys
 import shutil
 
 def save_nii(data, file, template='./MNI2mm_template.nii.gz'):
@@ -609,6 +608,7 @@ class VIM_SCAN_TargetPlanner(Planner):
             -ao {os.path.join(self.workdir, 'lh_target_T1.nii.gz')} \
             -a2 {os.path.join(self.workdir, 'rh_target_MNI.nii.gz')} \
             -a2o {os.path.join(self.workdir, 'rh_target_T1.nii.gz')}"
+        cmd += f' > {os.path.join(self.workdir, "synthmorph.log")} 2>&1'
         os.system(cmd)
             
         # python mri_synthmorph_joint.py -t /mnt/HardDisk3/AutoPoint_test/trans.nii.gz -o /mnt/HardDisk3/AutoPoint_test/MNINlin6Asym_indi.nii.gz /mnt/HardDisk3/AutoPoint_test/tpl-MNI152NLin6Asym_res-02_desc-brain_T1w.nii.gz /mnt/HardDisk3/AutoPoint_test/data_from_Wei/Preprocess_DeepPrep_0630/Recon/sub-Stroke014/mri/brain.mgz -mp /opt/model/SynthMorph/models -a /mnt/HardDisk3/AutoPoint_test/lh_thalamus_MNINLin6Asym_2mm.nii.gz -ao /mnt/HardDisk3/AutoPoint_test/lh_thalamus_indi.nii.gz
@@ -641,8 +641,8 @@ class VIM_SCAN_TargetPlanner(Planner):
         ## create a dictionary to store the target information
         target_info_dict = {
             'name': subject,
-            'lh_Indi_Target_Indix': None,
-            'rh_Indi_Target_Indix': None,
+            'lh_Indi_Target_Index': None,
+            'rh_Indi_Target_Index': None,
             'lh_Indi_Target_Score': float(lh_indi_target_score),
             'rh_Indi_Target_Score': float(rh_indi_target_score),
             'lh_Indi_Target_surfRAS': None,

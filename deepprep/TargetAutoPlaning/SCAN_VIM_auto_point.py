@@ -1,5 +1,5 @@
 import os
-from TargetAutoPlaning import VIM_SCAN_TargetPlanner, parc213_DeepPrep, parcellation_18
+from TargetAutoPlaning_Core import VIM_SCAN_TargetPlanner, parc213_DeepPrep, parcellation_18
 from glob import glob
 import pandas as pd
 
@@ -7,6 +7,8 @@ import argparse
 import os
 
 import json
+
+from contextlib import redirect_stdout
 
 def parse_arguments():
     parser = argparse.ArgumentParser(description="Process the paths for data, output, and reconall directories.")
@@ -127,13 +129,17 @@ def SCAN_target_auto_planing_batch(data_path, output_path, reconall_dir, subject
                 # output_path_split = output_path.split('/')
                 # output_path_parcellation18 = '/'.join(output_path_split[:-1])
                 output_path_parcellation18 = output_path
-                return_value = parcellation_18(data_path, output_path_parcellation18, subject, run)
+                conf = 2.5
+                conf_str = 'c25'
+                with open(os.path.join(output_path_parcellation18, subject, run, 'parcellation_18_log.txt'), 'w') as f:
+                    with redirect_stdout(f):
+                         return_value = parcellation_18(data_path, output_path_parcellation18, subject, run, conf=conf)
                 if return_value == 0:
                     break
                 ## 将18分区的结果复制到work_dir_run
-                cmd = f'cp {os.path.join(output_path_parcellation18, subject, run, "Parcellation18/iter10_c25_w1", "Iter_10_sm4/lh.parc_result.annot")} {work_dir_run}/lh_parc18_fs6_surf.annot'
+                cmd = f'cp {os.path.join(output_path_parcellation18, subject, run, f"Parcellation18/iter10_{conf_str}_w1", "Iter_10_sm4/lh.parc_result.annot")} {work_dir_run}/lh_parc18_fs6_surf.annot'
                 os.system(cmd)
-                cmd = f'cp {os.path.join(output_path_parcellation18, subject, run, "Parcellation18/iter10_c25_w1", "Iter_10_sm4/rh.parc_result.annot")} {work_dir_run}/rh_parc18_fs6_surf.annot'
+                cmd = f'cp {os.path.join(output_path_parcellation18, subject, run, f"Parcellation18/iter10_{conf_str}_w1", "Iter_10_sm4/rh.parc_result.annot")} {work_dir_run}/rh_parc18_fs6_surf.annot'
                 os.system(cmd)
 
                 # ## 进行213parcel的计算
@@ -221,13 +227,17 @@ def SCAN_target_auto_planing_batch(data_path, output_path, reconall_dir, subject
                     # output_path_split = output_path.split('/')
                     # output_path_parcellation18 = '/'.join(output_path_split[:-1])
                     output_path_parcellation18 = output_path
-                    return_value = parcellation_18(data_path, output_path_parcellation18, subject, run)
+                    conf = 2.5
+                    conf_str = 'c25'
+                    with open(os.path.join(output_path_parcellation18, subject, run, 'parcellation_18_log.txt'), 'w') as f:
+                        with redirect_stdout(f):
+                            return_value = parcellation_18(data_path, output_path_parcellation18, subject, run, conf=conf)
                     if return_value == 0:
                         break
                     ## 将18分区的结果复制到work_dir_run
-                    cmd = f'cp {os.path.join(output_path_parcellation18, subject, run, "Parcellation18/iter10_c25_w1", "Iter_10_sm4/lh.parc_result.annot")} {work_dir_run}/lh_parc18_fs6_surf.annot'
+                    cmd = f'cp {os.path.join(output_path_parcellation18, subject, run, f"Parcellation18/iter10_{conf_str}_w1", "Iter_10_sm4/lh.parc_result.annot")} {work_dir_run}/lh_parc18_fs6_surf.annot'
                     os.system(cmd)
-                    cmd = f'cp {os.path.join(output_path_parcellation18, subject, run, "Parcellation18/iter10_c25_w1", "Iter_10_sm4/rh.parc_result.annot")} {work_dir_run}/rh_parc18_fs6_surf.annot'
+                    cmd = f'cp {os.path.join(output_path_parcellation18, subject, run, f"Parcellation18/iter10_{conf_str}_w1", "Iter_10_sm4/rh.parc_result.annot")} {work_dir_run}/rh_parc18_fs6_surf.annot'
                     os.system(cmd)
 
                     # ## 进行213parcel的计算

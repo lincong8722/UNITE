@@ -606,14 +606,16 @@ class MotorTargetPlanner(Planner):
         ## create a dictionary to store the target information
         target_info_dict = {
             'name': subject,
-            'lh_Indi_Target_Indix': f'lh{int(lh_indi_target_index)}',
-            'rh_Indi_Target_Indix': f'rh{int(rh_indi_target_index)}',
+            'lh_Indi_Target_Index': f'lh{int(lh_indi_target_index)}',
+            'rh_Indi_Target_Index': f'rh{int(rh_indi_target_index)}',
             'lh_Indi_Target_Score': float(lh_indi_target_score),
             'rh_Indi_Target_Score': float(rh_indi_target_score),
             'lh_Indi_Target_surfRAS': f'{lh_target_surfRAS[0]:.2f},{lh_target_surfRAS[1]:.2f},{lh_target_surfRAS[2]:.2f}',
             'rh_Indi_Target_surfRAS': f'{rh_target_surfRAS[0]:.2f},{rh_target_surfRAS[1]:.2f},{rh_target_surfRAS[2]:.2f}',
             'lh_Indi_Target_volRAS': f'{lh_indi_target_volRAS[0]:.2f},{lh_indi_target_volRAS[1]:.2f},{lh_indi_target_volRAS[2]:.2f}',
             'rh_Indi_Target_volRAS': f'{rh_indi_target_volRAS[0]:.2f},{rh_indi_target_volRAS[1]:.2f},{rh_indi_target_volRAS[2]:.2f}',
+            'lh_Indi_Target_fsaverage6_Index': f'lh{int(lh_fs6_target_index)}',
+            'rh_Indi_Target_fsaverage6_Index': f'rh{int(rh_fs6_target_index)}',
             'lh_Indi_Target_Voxel_Coord_T1w_Space': f'{round(lh_indi_target_voxel_coord_T1w_space[0])},{round(lh_indi_target_voxel_coord_T1w_space[1])},{round(lh_indi_target_voxel_coord_T1w_space[2])}',
             'rh_Indi_Target_Voxel_Coord_T1w_Space': f'{round(rh_indi_target_voxel_coord_T1w_space[0])},{round(rh_indi_target_voxel_coord_T1w_space[1])},{round(rh_indi_target_voxel_coord_T1w_space[2])}',
             'lh_Indi_Target_Voxel_Coord_MNI_Space': f'{lh_fs6_target_surfRAS[0]:.2f},{lh_fs6_target_surfRAS[1]:.2f},{lh_fs6_target_surfRAS[2]:.2f}',

@@ -411,7 +411,7 @@ class Planner(object):
             surf_bold = np.hstack((surf_bold, bold_surf))
         return surf_bold
     
-    def load_surf_bolds_DeepPrep(self, surf_bolds_path, hemi='lh'):
+    def load_surf_bolds_DeepPrep(self, surf_bolds_path, hemi='lh', dummy_scans=4):
         '''
         Load all the surface bold data in the surf_bolds_path from DeepPrep postprocess resultsss
         '''
@@ -433,6 +433,10 @@ class Planner(object):
             n_frame = bold.shape[3]
             n_vertex = bold.shape[0] * bold.shape[1] * bold.shape[2]
             bold_surf = bold.reshape((n_vertex, n_frame), order='F')
+            if n_frame < dummy_scans:
+                continue
+            if dummy_scans > 0:
+                bold_surf = bold_surf[:, dummy_scans:]
             surf_bold = np.hstack((surf_bold, bold_surf))
         return surf_bold
 
@@ -446,7 +450,7 @@ class Planner(object):
             vol_bold = np.concatenate((vol_bold, bold_np), axis=3)
         return vol_bold
     
-    def load_vol_bolds_DeepPrep(self, vol_bolds_path):
+    def load_vol_bolds_DeepPrep(self, vol_bolds_path, dummy_scans=4):
         vol_bold_files = sorted(glob.glob(os.path.join(vol_bolds_path,
                                                        f'*_run-*_space-MNI152NLin6Asym_res-2_desc-fwhm_bold.nii.gz')))
         if len(vol_bold_files) == 0:
@@ -456,6 +460,10 @@ class Planner(object):
         for bold_file in vol_bold_files:
             bold = ants.image_read(bold_file)
             bold_np = bold.numpy()
+            if bold_np.shape[3] < dummy_scans:
+                continue
+            if dummy_scans > 0:
+                bold_np = bold_np[:, :, :, dummy_scans:]
             vol_bold = np.concatenate((vol_bold, bold_np), axis=3)
         return vol_bold
 

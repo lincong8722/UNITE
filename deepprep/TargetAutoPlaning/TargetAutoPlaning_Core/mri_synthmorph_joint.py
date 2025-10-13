@@ -530,6 +530,9 @@ import tensorflow as tf
 import neurite as ne
 import voxelmorph as vxm
 
+CUDA_VISIBLE_DEVICES = "cpu"
+os.environ['CUDA_VISIBLE_DEVICES'] = CUDA_VISIBLE_DEVICES
+
 # Setup.
 gpus = tf.config.experimental.list_physical_devices(device_type='GPU')
 for gpu in gpus:
@@ -607,7 +610,9 @@ if is_mat:
 else:
     prop.update(mid_space=True, int_steps=arg.steps, skip_affine=arg.model == 'deform')
     model = vxm.networks.HyperVxmJoint(**prop)
-    inputs = (np.asarray([arg.hyper]), *inputs)
+
+    # inputs = (np.asarray([arg.hyper]), *inputs)
+    inputs = (tf.constant([arg.hyper], dtype=tf.float32), *inputs)
 
 
 # Weights.

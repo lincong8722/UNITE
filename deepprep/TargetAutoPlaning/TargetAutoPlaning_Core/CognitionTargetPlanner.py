@@ -12,8 +12,7 @@ from .planner import Planner, surf2mesh, mri_surf2surf, mri_annot2annot, plot_ta
 
 import shutil
 
-
-class AphasiaTargetPlanner(Planner):
+class CognitionTargetPlanner(Planner):
     def __init__(self, verbose=False, workdir=None, logdir=None):
         super().__init__(verbose, workdir, logdir)
 
@@ -41,17 +40,17 @@ class AphasiaTargetPlanner(Planner):
         self.rh_sulc = None
 
         # candidate target constraints
-        # ventro
-        # ?h_parc213_[native/fs6]_surf.annot parcellation index
-        self.func_ventro_indexes = (45,)
-        # ?h.aparc.annot parcellation index
-        self.anat_ventro_indexes = (18, 20)
+        # # ventro
+        # # ?h_parc213_[native/fs6]_surf.annot parcellation index
+        # self.func_ventro_indexes = (45,)
+        # # ?h.aparc.annot parcellation index
+        # self.anat_ventro_indexes = (18, 20)
 
         # dorsal
-        # ?h_parc213_[native/fs6]_surf.annot parcellation index
-        self.func_dorsal_indexes = (45, 52)
+        # ?h_parc18_[native/fs6]_surf.annot parcellation index
+        self.func_dorsal_indexes = (12,)
         # ?h.aparc.annot parcellation index
-        self.anat_dorsal_indexes = (28,)
+        self.anat_dorsal_indexes = (3, 18, 27)
         # SMA recon/label/?h.BA6_wxvivo.label
         self.lh_ba6_lable = None
         self.rh_ba6_lable = None
@@ -119,6 +118,22 @@ class AphasiaTargetPlanner(Planner):
         rh_fs6_medial_mask_file = self.resource_dir / 'rh_fs6_medial_mask_surf.mgh'
         rh_fs6_medial_mask = nib.load(rh_fs6_medial_mask_file).get_fdata().flatten()
 
+        # lh 18 function parcellation labels
+        lh_parc18_fs6_surf_file = os.path.join(self.workdir, 'lh_parc18_fs6_surf.annot')
+        lh_parc18_native_surf_file = os.path.join(self.workdir, 'lh_parc18_native_surf.annot')
+        mri_annot2annot('fsaverage6', lh_parc18_fs6_surf_file, subj, lh_parc18_native_surf_file, 'lh')
+        labels, ctab, names = nib.freesurfer.read_annot(
+            os.path.join(self.workdir, 'lh_parc18_native_surf.annot'))
+        self.lh_func_labels = labels.copy()
+
+        # rh 18 function parcellation labels
+        rh_parc18_fs6_surf_file = os.path.join(self.workdir, 'rh_parc18_fs6_surf.annot')
+        rh_parc18_native_surf_file = os.path.join(self.workdir, 'rh_parc18_native_surf.annot')
+        mri_annot2annot('fsaverage6', rh_parc18_fs6_surf_file, subj, rh_parc18_native_surf_file, 'rh')
+        labels, ctab, names = nib.freesurfer.read_annot(
+            os.path.join(self.workdir, 'rh_parc18_native_surf.annot'))
+        self.rh_func_labels = labels.copy()
+
         # # lh BA6 label constraint
         # lh_ba6_label_file = os.path.join(os.environ.get("SUBJECTS_DIR"), subj, 'label', 'lh.BA6_exvivo.label')
         # lh_ba6_label = nib.freesurfer.read_label(lh_ba6_label_file)
@@ -139,45 +154,35 @@ class AphasiaTargetPlanner(Planner):
         #     rh_pial_mesh.point_data['label'] = rh_ba6_mask.copy()
         #     rh_pial_mesh.save(os.path.join(self.logdir, 'rh_ba6_mask.vtk'))
 
-        # lh 213 function parcellation labels
-        # labels, ctab, names = nib.freesurfer.read_annot(
-        #     os.path.join(app_data_path, 'Parcellation-213', 'lh_parc213_native_surf.annot'))
+        # # lh 213 function parcellation labels
+        # # labels, ctab, names = nib.freesurfer.read_annot(
+        # #     os.path.join(app_data_path, 'Parcellation-213', 'lh_parc213_native_surf.annot'))
         
-        lh_fs6_parc213_file = os.path.join(self.workdir, 'lh_parc213_fs6_surf.mgh')
-        lh_native_parc213_file = os.path.join(self.workdir, 'lh_parc213_native_surf.mgh')
-        mri_surf2surf('fsaverage6', lh_fs6_parc213_file, subj, lh_native_parc213_file, 'lh')
-        lh_native_parc213 = nib.load(lh_native_parc213_file).get_fdata().reshape(-1, order='F')
-        lh_native_parc213_labels = lh_native_parc213
+        # lh_fs6_parc213_file = os.path.join(self.workdir, 'lh_parc213_fs6_surf.mgh')
+        # lh_native_parc213_file = os.path.join(self.workdir, 'lh_parc213_native_surf.mgh')
+        # mri_surf2surf('fsaverage6', lh_fs6_parc213_file, subj, lh_native_parc213_file, 'lh')
+        # lh_native_parc213 = nib.load(lh_native_parc213_file).get_fdata().reshape(-1, order='F')
+        # lh_native_parc213_labels = lh_native_parc213
 
-        self.lh_func_labels = lh_native_parc213_labels.copy()
-        if self.verbose:
-            lh_pial_mesh.point_data['label'] = labels.copy()
-            lh_pial_mesh.save(os.path.join(self.logdir, 'lh_func_parc213.vtk'))
+        # self.lh_func_labels = lh_native_parc213_labels.copy()
+        # if self.verbose:
+        #     lh_pial_mesh.point_data['label'] = labels.copy()
+        #     lh_pial_mesh.save(os.path.join(self.logdir, 'lh_func_parc213.vtk'))
 
-        # rh 213 function parcellation labels
-        # labels, ctab, names = nib.freesurfer.read_annot(
-        #     os.path.join(app_data_path, 'Parcellation-213', 'rh_parc213_native_surf.annot'))
+        # # rh 213 function parcellation labels
+        # # labels, ctab, names = nib.freesurfer.read_annot(
+        # #     os.path.join(app_data_path, 'Parcellation-213', 'rh_parc213_native_surf.annot'))
         
-        rh_fs6_parc213_file = os.path.join(self.workdir, 'rh_parc213_fs6_surf.mgh')
-        rh_native_parc213_file = os.path.join(self.workdir, 'rh_parc213_native_surf.mgh')
-        mri_surf2surf('fsaverage6', rh_fs6_parc213_file, subj, rh_native_parc213_file, 'rh')
-        rh_native_parc213 = nib.load(rh_native_parc213_file).get_fdata().reshape(-1, order='F')
-        rh_native_parc213_labels = rh_native_parc213
+        # rh_fs6_parc213_file = os.path.join(self.workdir, 'rh_parc213_fs6_surf.mgh')
+        # rh_native_parc213_file = os.path.join(self.workdir, 'rh_parc213_native_surf.mgh')
+        # mri_surf2surf('fsaverage6', rh_fs6_parc213_file, subj, rh_native_parc213_file, 'rh')
+        # rh_native_parc213 = nib.load(rh_native_parc213_file).get_fdata().reshape(-1, order='F')
+        # rh_native_parc213_labels = rh_native_parc213
 
-        self.rh_func_labels = rh_native_parc213_labels.copy()
-        if self.verbose:
-            rh_pial_mesh.point_data['label'] = labels.copy()
-            rh_pial_mesh.save(os.path.join(self.logdir, 'rh_func_parc213.vtk'))
-
-        # lh 18 function parcellation labels
-        lh_parc18_fs6_surf_file = os.path.join(self.workdir, 'lh_parc18_fs6_surf.annot')
-        lh_parc18_native_surf_file = os.path.join(self.workdir, 'lh_parc18_native_surf.annot')
-        mri_annot2annot('fsaverage6', lh_parc18_fs6_surf_file, subj, lh_parc18_native_surf_file, 'lh')
-
-        # rh 18 function parcellation labels
-        rh_parc18_fs6_surf_file = os.path.join(self.workdir, 'rh_parc18_fs6_surf.annot')
-        rh_parc18_native_surf_file = os.path.join(self.workdir, 'rh_parc18_native_surf.annot')
-        mri_annot2annot('fsaverage6', rh_parc18_fs6_surf_file, subj, rh_parc18_native_surf_file, 'rh')
+        # self.rh_func_labels = rh_native_parc213_labels.copy()
+        # if self.verbose:
+        #     rh_pial_mesh.point_data['label'] = labels.copy()
+        #     rh_pial_mesh.save(os.path.join(self.logdir, 'rh_func_parc213.vtk'))
 
         # compute_sulc_depth
         # lh
@@ -195,70 +200,70 @@ class AphasiaTargetPlanner(Planner):
         mri_surf2surf(subj, rh_alpha_shape_sulc_file, 'fsaverage6', rh_fs6_alpha_shape_sulc_file, 'rh')
         self.rh_fs6_sulc = nib.load(rh_fs6_alpha_shape_sulc_file).get_fdata().flatten()
 
-        # ventro
-        # lh ventro anatomy candidate region mask
-        lh_ventro_anat_candi_mask = self.labels2mask(self.lh_anat_labels, self.anat_ventro_indexes)
-        if self.verbose:
-            lh_pial_mesh.point_data['label'] = lh_ventro_anat_candi_mask.copy()
-            lh_pial_mesh.save(os.path.join(self.logdir, 'lh_ventro_anat_candi_mask.vtk'))
+        # # ventro
+        # # lh ventro anatomy candidate region mask
+        # lh_ventro_anat_candi_mask = self.labels2mask(self.lh_anat_labels, self.anat_ventro_indexes)
+        # if self.verbose:
+        #     lh_pial_mesh.point_data['label'] = lh_ventro_anat_candi_mask.copy()
+        #     lh_pial_mesh.save(os.path.join(self.logdir, 'lh_ventro_anat_candi_mask.vtk'))
 
-        # rh ventro anatomy candidate region mask
-        rh_ventro_anat_candi_mask = self.labels2mask(self.rh_anat_labels, self.anat_ventro_indexes)
-        if self.verbose:
-            rh_pial_mesh.point_data['label'] = rh_ventro_anat_candi_mask.copy()
-            rh_pial_mesh.save(os.path.join(self.logdir, 'rh_ventro_anat_candi_mask.vtk'))
+        # # rh ventro anatomy candidate region mask
+        # rh_ventro_anat_candi_mask = self.labels2mask(self.rh_anat_labels, self.anat_ventro_indexes)
+        # if self.verbose:
+        #     rh_pial_mesh.point_data['label'] = rh_ventro_anat_candi_mask.copy()
+        #     rh_pial_mesh.save(os.path.join(self.logdir, 'rh_ventro_anat_candi_mask.vtk'))
 
-        # lh ventro function candidate region mask
-        lh_ventro_func_candi_mask = self.labels2mask(self.lh_func_labels, self.func_ventro_indexes)
-        if self.verbose:
-            lh_pial_mesh.point_data['label'] = lh_ventro_func_candi_mask.copy()
-            lh_pial_mesh.save(os.path.join(self.logdir, 'lh_ventro_func_candi_mask.vtk'))
+        # # lh ventro function candidate region mask
+        # lh_ventro_func_candi_mask = self.labels2mask(self.lh_func_labels, self.func_ventro_indexes)
+        # if self.verbose:
+        #     lh_pial_mesh.point_data['label'] = lh_ventro_func_candi_mask.copy()
+        #     lh_pial_mesh.save(os.path.join(self.logdir, 'lh_ventro_func_candi_mask.vtk'))
 
-        # rh ventro function candidate region mask
-        rh_ventro_func_candi_mask = self.labels2mask(self.rh_func_labels, self.func_ventro_indexes)
-        if self.verbose:
-            rh_pial_mesh.point_data['label'] = rh_ventro_func_candi_mask.copy()
-            rh_pial_mesh.save(os.path.join(self.logdir, 'rh_ventro_func_candi_mask.vtk'))
+        # # rh ventro function candidate region mask
+        # rh_ventro_func_candi_mask = self.labels2mask(self.rh_func_labels, self.func_ventro_indexes)
+        # if self.verbose:
+        #     rh_pial_mesh.point_data['label'] = rh_ventro_func_candi_mask.copy()
+        #     rh_pial_mesh.save(os.path.join(self.logdir, 'rh_ventro_func_candi_mask.vtk'))
 
-        # lh ventro candidate region mask
-        lh_ventro_candi_mask = (lh_ventro_anat_candi_mask == 1) & (lh_ventro_func_candi_mask == 1)
-        lh_ventro_candi_mask_file = self.workdir / 'lh_ventro_candi_mask.mgh'
-        self.save_mgh(lh_ventro_candi_mask, lh_ventro_candi_mask_file)
-        lh_fs6_ventro_candi_mask_file = self.workdir / 'lh_fs6_ventro_candi_mask.mgh'
-        mri_surf2surf(subj, lh_ventro_candi_mask_file, 'fsaverage6', lh_fs6_ventro_candi_mask_file, 'lh')
-        lh_fs6_ventro_candi_mask = nib.load(lh_fs6_ventro_candi_mask_file).get_fdata().flatten()
-        if not np.any(lh_fs6_ventro_candi_mask):
-            warnings.warn(
-                'warning: The lh individual IFG region was empty, using atlas IFG region')
-            lh_fs6_ifg_mask_file = self.resource_dir / 'lh_fs6_ifg_mask_surf.mgh'
-            lh_fs6_ventro_candi_mask = nib.load(lh_fs6_ifg_mask_file).get_fdata().flatten()
-            self.save_mgh(lh_fs6_ventro_candi_mask, lh_fs6_ventro_candi_mask_file)
-            mri_surf2surf('fsaverage6', lh_fs6_ventro_candi_mask_file, subj, lh_ventro_candi_mask_file, 'lh')
-            lh_ventro_candi_mask = nib.load(lh_ventro_candi_mask_file).get_fdata().flatten()
-        self.lh_fs6_ventro_candi_mask = lh_fs6_ventro_candi_mask.astype(np.float32)
-        if self.verbose:
-            lh_pial_mesh.point_data['label'] = lh_ventro_candi_mask.copy()
-            lh_pial_mesh.save(os.path.join(self.logdir, 'lh_ventro_candi_mask.vtk'))
+        # # lh ventro candidate region mask
+        # lh_ventro_candi_mask = (lh_ventro_anat_candi_mask == 1) & (lh_ventro_func_candi_mask == 1)
+        # lh_ventro_candi_mask_file = self.workdir / 'lh_ventro_candi_mask.mgh'
+        # self.save_mgh(lh_ventro_candi_mask, lh_ventro_candi_mask_file)
+        # lh_fs6_ventro_candi_mask_file = self.workdir / 'lh_fs6_ventro_candi_mask.mgh'
+        # mri_surf2surf(subj, lh_ventro_candi_mask_file, 'fsaverage6', lh_fs6_ventro_candi_mask_file, 'lh')
+        # lh_fs6_ventro_candi_mask = nib.load(lh_fs6_ventro_candi_mask_file).get_fdata().flatten()
+        # if not np.any(lh_fs6_ventro_candi_mask):
+        #     warnings.warn(
+        #         'warning: The lh individual IFG region was empty, using atlas IFG region')
+        #     lh_fs6_ifg_mask_file = self.resource_dir / 'lh_fs6_ifg_mask_surf.mgh'
+        #     lh_fs6_ventro_candi_mask = nib.load(lh_fs6_ifg_mask_file).get_fdata().flatten()
+        #     self.save_mgh(lh_fs6_ventro_candi_mask, lh_fs6_ventro_candi_mask_file)
+        #     mri_surf2surf('fsaverage6', lh_fs6_ventro_candi_mask_file, subj, lh_ventro_candi_mask_file, 'lh')
+        #     lh_ventro_candi_mask = nib.load(lh_ventro_candi_mask_file).get_fdata().flatten()
+        # self.lh_fs6_ventro_candi_mask = lh_fs6_ventro_candi_mask.astype(np.float32)
+        # if self.verbose:
+        #     lh_pial_mesh.point_data['label'] = lh_ventro_candi_mask.copy()
+        #     lh_pial_mesh.save(os.path.join(self.logdir, 'lh_ventro_candi_mask.vtk'))
 
-        # rh ventro candidate region mask
-        rh_ventro_candi_mask = (rh_ventro_anat_candi_mask == 1) & (rh_ventro_func_candi_mask == 1)
-        rh_ventro_candi_mask_file = self.workdir / 'rh_ventro_candi_mask.mgh'
-        self.save_mgh(rh_ventro_candi_mask, rh_ventro_candi_mask_file)
-        rh_fs6_ventro_candi_mask_file = self.workdir / 'rh_fs6_ventro_candi_mask.mgh'
-        mri_surf2surf(subj, rh_ventro_candi_mask_file, 'fsaverage6', rh_fs6_ventro_candi_mask_file, 'rh')
-        rh_fs6_ventro_candi_mask = nib.load(rh_fs6_ventro_candi_mask_file).get_fdata().flatten()
-        if not np.any(rh_fs6_ventro_candi_mask):
-            warnings.warn(
-                'warning: The rh individual IFG region was empty, using atlas IFG region')
-            rh_fs6_ifg_mask_file = self.resource_dir / 'rh_fs6_ifg_mask_surf.mgh'
-            rh_fs6_ventro_candi_mask = nib.load(rh_fs6_ifg_mask_file).get_fdata().flatten()
-            self.save_mgh(rh_fs6_ventro_candi_mask, rh_fs6_ventro_candi_mask_file)
-            mri_surf2surf('fsaverage6', rh_fs6_ventro_candi_mask_file, subj, rh_ventro_candi_mask_file, 'rh')
-            rh_ventro_candi_mask = nib.load(rh_ventro_candi_mask_file).get_fdata().flatten()
-        self.rh_fs6_ventro_candi_mask = rh_fs6_ventro_candi_mask.astype(np.float32)
-        if self.verbose:
-            rh_pial_mesh.point_data['label'] = rh_ventro_candi_mask.copy()
-            rh_pial_mesh.save(os.path.join(self.logdir, 'rh_ventro_candi_mask.vtk'))
+        # # rh ventro candidate region mask
+        # rh_ventro_candi_mask = (rh_ventro_anat_candi_mask == 1) & (rh_ventro_func_candi_mask == 1)
+        # rh_ventro_candi_mask_file = self.workdir / 'rh_ventro_candi_mask.mgh'
+        # self.save_mgh(rh_ventro_candi_mask, rh_ventro_candi_mask_file)
+        # rh_fs6_ventro_candi_mask_file = self.workdir / 'rh_fs6_ventro_candi_mask.mgh'
+        # mri_surf2surf(subj, rh_ventro_candi_mask_file, 'fsaverage6', rh_fs6_ventro_candi_mask_file, 'rh')
+        # rh_fs6_ventro_candi_mask = nib.load(rh_fs6_ventro_candi_mask_file).get_fdata().flatten()
+        # if not np.any(rh_fs6_ventro_candi_mask):
+        #     warnings.warn(
+        #         'warning: The rh individual IFG region was empty, using atlas IFG region')
+        #     rh_fs6_ifg_mask_file = self.resource_dir / 'rh_fs6_ifg_mask_surf.mgh'
+        #     rh_fs6_ventro_candi_mask = nib.load(rh_fs6_ifg_mask_file).get_fdata().flatten()
+        #     self.save_mgh(rh_fs6_ventro_candi_mask, rh_fs6_ventro_candi_mask_file)
+        #     mri_surf2surf('fsaverage6', rh_fs6_ventro_candi_mask_file, subj, rh_ventro_candi_mask_file, 'rh')
+        #     rh_ventro_candi_mask = nib.load(rh_ventro_candi_mask_file).get_fdata().flatten()
+        # self.rh_fs6_ventro_candi_mask = rh_fs6_ventro_candi_mask.astype(np.float32)
+        # if self.verbose:
+        #     rh_pial_mesh.point_data['label'] = rh_ventro_candi_mask.copy()
+        #     rh_pial_mesh.save(os.path.join(self.logdir, 'rh_ventro_candi_mask.vtk'))
 
         # dorsal
         # lh dorsal anatomy candidate region mask
@@ -295,11 +300,11 @@ class AphasiaTargetPlanner(Planner):
             rh_pial_mesh.point_data['label'] = rh_dorsal_func_candi_mask.copy()
             rh_pial_mesh.save(os.path.join(self.logdir, 'rh_dorsal_func_candi_mask.vtk'))
 
-        # fs6 SMA
-        lh_fs6_sma_mask_file = self.resource_dir / 'lh_fs6_sma_mask_surf.mgh'
-        lh_fs6_sma_mask = nib.load(lh_fs6_sma_mask_file).get_fdata().flatten()
-        rh_fs6_sma_mask_file = self.resource_dir / 'rh_fs6_sma_mask_surf.mgh'
-        rh_fs6_sma_mask = nib.load(rh_fs6_sma_mask_file).get_fdata().flatten()
+        # # fs6 SMA
+        # lh_fs6_sma_mask_file = self.resource_dir / 'lh_fs6_sma_mask_surf.mgh'
+        # lh_fs6_sma_mask = nib.load(lh_fs6_sma_mask_file).get_fdata().flatten()
+        # rh_fs6_sma_mask_file = self.resource_dir / 'rh_fs6_sma_mask_surf.mgh'
+        # rh_fs6_sma_mask = nib.load(rh_fs6_sma_mask_file).get_fdata().flatten()
 
         # lh dorsal candidate region mask
         lh_dorsal_candi_mask = (lh_dorsal_anat_candi_mask == 1) & (lh_dorsal_func_candi_mask == 1) # & (lh_ba6_mask == 1)
@@ -308,12 +313,12 @@ class AphasiaTargetPlanner(Planner):
         lh_fs6_dorsal_candi_mask_file = self.workdir / 'lh_fs6_dorsal_candi_mask.mgh'
         mri_surf2surf(subj, lh_dorsal_candi_mask_file, 'fsaverage6', lh_fs6_dorsal_candi_mask_file, 'lh')
         lh_fs6_dorsal_candi_mask = nib.load(lh_fs6_dorsal_candi_mask_file).get_fdata().flatten()
-        lh_fs6_dorsal_candi_mask = (lh_fs6_dorsal_candi_mask > 0) & (lh_fs6_medial_mask == 0) & (lh_fs6_sma_mask == 1)
-        if not np.any(lh_fs6_dorsal_candi_mask):
-            warnings.warn(
-                'warning: The lh individual SMA region was empty, using atlas SMA region')
-            lh_fs6_dorsal_candi_mask = lh_fs6_sma_mask
-            self.save_mgh(lh_fs6_dorsal_candi_mask, lh_fs6_dorsal_candi_mask_file)
+        lh_fs6_dorsal_candi_mask = (lh_fs6_dorsal_candi_mask > 0) & (lh_fs6_medial_mask == 0) # & (lh_fs6_sma_mask == 1)
+        # if not np.any(lh_fs6_dorsal_candi_mask):
+        #     warnings.warn(
+        #         'warning: The lh individual SMA region was empty, using atlas SMA region')
+        #     lh_fs6_dorsal_candi_mask = lh_fs6_sma_mask
+        #     self.save_mgh(lh_fs6_dorsal_candi_mask, lh_fs6_dorsal_candi_mask_file)
         self.lh_fs6_dorsal_candi_mask = lh_fs6_dorsal_candi_mask.astype(np.float32)
         self.save_mgh(self.lh_fs6_dorsal_candi_mask, lh_fs6_dorsal_candi_mask_file)
         mri_surf2surf('fsaverage6', lh_fs6_dorsal_candi_mask_file, subj, lh_dorsal_candi_mask_file, 'lh')
@@ -332,12 +337,12 @@ class AphasiaTargetPlanner(Planner):
         rh_fs6_dorsal_candi_mask_file = self.workdir / 'rh_fs6_dorsal_candi_mask.mgh'
         mri_surf2surf(subj, rh_dorsal_candi_mask_file, 'fsaverage6', rh_fs6_dorsal_candi_mask_file, 'rh')
         rh_fs6_dorsal_candi_mask = nib.load(rh_fs6_dorsal_candi_mask_file).get_fdata().flatten()
-        rh_fs6_dorsal_candi_mask = (rh_fs6_dorsal_candi_mask > 0) & (rh_fs6_medial_mask == 0) & (rh_fs6_sma_mask == 1)
-        if not np.any(rh_fs6_dorsal_candi_mask):
-            warnings.warn(
-                'warning: The rh individual SMA region was empty, using atlas SMA region')
-            rh_fs6_dorsal_candi_mask = rh_fs6_sma_mask
-            self.save_mgh(rh_fs6_dorsal_candi_mask, rh_fs6_dorsal_candi_mask_file)
+        rh_fs6_dorsal_candi_mask = (rh_fs6_dorsal_candi_mask > 0) & (rh_fs6_medial_mask == 0) # & (rh_fs6_sma_mask == 1)
+        # if not np.any(rh_fs6_dorsal_candi_mask):
+        #     warnings.warn(
+        #         'warning: The rh individual SMA region was empty, using atlas SMA region')
+        #     rh_fs6_dorsal_candi_mask = rh_fs6_sma_mask
+        #     self.save_mgh(rh_fs6_dorsal_candi_mask, rh_fs6_dorsal_candi_mask_file)
         self.rh_fs6_dorsal_candi_mask = rh_fs6_dorsal_candi_mask.astype(np.float32)
         self.save_mgh(self.rh_fs6_dorsal_candi_mask, rh_fs6_dorsal_candi_mask_file)
         mri_surf2surf('fsaverage6', rh_fs6_dorsal_candi_mask_file, subj, rh_dorsal_candi_mask_file, 'rh')
@@ -349,49 +354,49 @@ class AphasiaTargetPlanner(Planner):
             rh_pial_mesh.point_data['label'] = self.rh_dorsal_candi_mask.copy()
             rh_pial_mesh.save(os.path.join(self.logdir, 'rh_dorsal_candi_mask.vtk'))
 
-    def __compute_ifg_fc(self, app_data_path, subj):
-        # lh
-        lh_fs6_ifg_seed_idx = self.lh_fs6_ventro_candi_mask == 1
-        seed_vector = np.mean(self.lh_surf_bold[lh_fs6_ifg_seed_idx], axis=0)
-        self.lh_lh_fs6_ifg_fc = self.compute_surf_fc(seed_vector, self.lh_surf_bold)
-        self.lh_rh_fs6_ifg_fc = self.compute_surf_fc(seed_vector, self.rh_surf_bold)
-        # rh
-        rh_fs6_ifg_seed_idx = self.rh_fs6_ventro_candi_mask == 1
-        seed_vector = np.mean(self.rh_surf_bold[rh_fs6_ifg_seed_idx], axis=0)
-        self.rh_rh_fs6_ifg_fc = self.compute_surf_fc(seed_vector, self.rh_surf_bold)
-        self.rh_lh_fs6_ifg_fc = self.compute_surf_fc(seed_vector, self.lh_surf_bold)
+    # def __compute_ifg_fc(self, app_data_path, subj):
+    #     # lh
+    #     lh_fs6_ifg_seed_idx = self.lh_fs6_ventro_candi_mask == 1
+    #     seed_vector = np.mean(self.lh_surf_bold[lh_fs6_ifg_seed_idx], axis=0)
+    #     self.lh_lh_fs6_ifg_fc = self.compute_surf_fc(seed_vector, self.lh_surf_bold)
+    #     self.lh_rh_fs6_ifg_fc = self.compute_surf_fc(seed_vector, self.rh_surf_bold)
+    #     # rh
+    #     rh_fs6_ifg_seed_idx = self.rh_fs6_ventro_candi_mask == 1
+    #     seed_vector = np.mean(self.rh_surf_bold[rh_fs6_ifg_seed_idx], axis=0)
+    #     self.rh_rh_fs6_ifg_fc = self.compute_surf_fc(seed_vector, self.rh_surf_bold)
+    #     self.rh_lh_fs6_ifg_fc = self.compute_surf_fc(seed_vector, self.lh_surf_bold)
 
-        self.lh_fs6_ifg_fc = (self.lh_lh_fs6_ifg_fc + self.rh_lh_fs6_ifg_fc) / 2
-        lh_fs6_ifg_fc_file = self.workdir / 'lh_fs6_ifg_fc.mgh'
-        self.save_mgh(self.lh_fs6_ifg_fc, lh_fs6_ifg_fc_file)
+    #     self.lh_fs6_ifg_fc = (self.lh_lh_fs6_ifg_fc + self.rh_lh_fs6_ifg_fc) / 2
+    #     lh_fs6_ifg_fc_file = self.workdir / 'lh_fs6_ifg_fc.mgh'
+    #     self.save_mgh(self.lh_fs6_ifg_fc, lh_fs6_ifg_fc_file)
 
-        # project lh fs6 IFG fc to native space
-        lh_ifg_fc_file = self.workdir / 'lh_ifg_fc.mgh'
-        mri_surf2surf('fsaverage6', lh_fs6_ifg_fc_file, subj, lh_ifg_fc_file, 'lh')
-        self.lh_ifg_fc = nib.load(lh_ifg_fc_file).get_fdata().flatten()
-        if self.verbose:
-            lh_fs6_pial_mesh = self.lh_fs6_pial_mesh.copy()
-            lh_fs6_pial_mesh.point_data['label'] = self.lh_fs6_ifg_fc.copy()
-            lh_fs6_pial_mesh.save(os.path.join(self.logdir, 'lh_fs6_ifg_fc.vtk'))
-            lh_pial_mesh = self.lh_pial_mesh.copy()
-            lh_pial_mesh.point_data['label'] = self.lh_ifg_fc.copy()
-            lh_pial_mesh.save(os.path.join(self.logdir, 'lh_ifg_fc.vtk'))
+    #     # project lh fs6 IFG fc to native space
+    #     lh_ifg_fc_file = self.workdir / 'lh_ifg_fc.mgh'
+    #     mri_surf2surf('fsaverage6', lh_fs6_ifg_fc_file, subj, lh_ifg_fc_file, 'lh')
+    #     self.lh_ifg_fc = nib.load(lh_ifg_fc_file).get_fdata().flatten()
+    #     if self.verbose:
+    #         lh_fs6_pial_mesh = self.lh_fs6_pial_mesh.copy()
+    #         lh_fs6_pial_mesh.point_data['label'] = self.lh_fs6_ifg_fc.copy()
+    #         lh_fs6_pial_mesh.save(os.path.join(self.logdir, 'lh_fs6_ifg_fc.vtk'))
+    #         lh_pial_mesh = self.lh_pial_mesh.copy()
+    #         lh_pial_mesh.point_data['label'] = self.lh_ifg_fc.copy()
+    #         lh_pial_mesh.save(os.path.join(self.logdir, 'lh_ifg_fc.vtk'))
 
-        self.rh_fs6_ifg_fc = (self.rh_rh_fs6_ifg_fc + self.lh_rh_fs6_ifg_fc) / 2
-        rh_fs6_ifg_fc_file = self.workdir / 'rh_fs6_ifg_fc.mgh'
-        self.save_mgh(self.rh_fs6_ifg_fc, rh_fs6_ifg_fc_file)
+    #     self.rh_fs6_ifg_fc = (self.rh_rh_fs6_ifg_fc + self.lh_rh_fs6_ifg_fc) / 2
+    #     rh_fs6_ifg_fc_file = self.workdir / 'rh_fs6_ifg_fc.mgh'
+    #     self.save_mgh(self.rh_fs6_ifg_fc, rh_fs6_ifg_fc_file)
 
-        # project rh fs6 IFG fc to native space
-        rh_ifg_fc_file = self.workdir / 'rh_ifg_fc.mgh'
-        mri_surf2surf('fsaverage6', rh_fs6_ifg_fc_file, subj, rh_ifg_fc_file, 'rh')
-        self.rh_ifg_fc = nib.load(rh_ifg_fc_file).get_fdata().flatten()
-        if self.verbose:
-            rh_fs6_pial_mesh = self.rh_fs6_pial_mesh.copy()
-            rh_fs6_pial_mesh.point_data['label'] = self.rh_fs6_ifg_fc.copy()
-            rh_fs6_pial_mesh.save(os.path.join(self.logdir, 'rh_fs6_ifg_fc.vtk'))
-            rh_pial_mesh = self.rh_pial_mesh.copy()
-            rh_pial_mesh.point_data['label'] = self.rh_ifg_fc.copy()
-            rh_pial_mesh.save(os.path.join(self.logdir, 'rh_ifg_fc.vtk'))
+    #     # project rh fs6 IFG fc to native space
+    #     rh_ifg_fc_file = self.workdir / 'rh_ifg_fc.mgh'
+    #     mri_surf2surf('fsaverage6', rh_fs6_ifg_fc_file, subj, rh_ifg_fc_file, 'rh')
+    #     self.rh_ifg_fc = nib.load(rh_ifg_fc_file).get_fdata().flatten()
+    #     if self.verbose:
+    #         rh_fs6_pial_mesh = self.rh_fs6_pial_mesh.copy()
+    #         rh_fs6_pial_mesh.point_data['label'] = self.rh_fs6_ifg_fc.copy()
+    #         rh_fs6_pial_mesh.save(os.path.join(self.logdir, 'rh_fs6_ifg_fc.vtk'))
+    #         rh_pial_mesh = self.rh_pial_mesh.copy()
+    #         rh_pial_mesh.point_data['label'] = self.rh_ifg_fc.copy()
+    #         rh_pial_mesh.save(os.path.join(self.logdir, 'rh_ifg_fc.vtk'))
 
     def __compute_heatmap(self, app_data_path, subj):
         # lh 18 function parcellation labels
@@ -417,6 +422,10 @@ class AphasiaTargetPlanner(Planner):
         # labels, ctab, names = nib.freesurfer.read_annot(
         #     os.path.join(app_data_path, 'Parcellation-18', 'rh_parc18_native_surf.annot'))
 
+        ## lh FCN Confidence
+        lh_fs6_net12_confidence_file = os.path.join(parcellation18_dir, 'iter10_c25_w1', 'Iter_10_sm4', 'lh.NetworkConfidence_12_fs6.mgh')
+        lh_fs6_net12_confidence = nib.load(lh_fs6_net12_confidence_file).get_fdata().flatten()
+
         ## rh
         rh_fs6_parc18_file = os.path.join(parcellation18_dir, 'iter10_c25_w1', 'Iter_10_sm4', 'rh.parc_result_highconf.annot')
         # rh_native_parc18_file = os.path.join(self.workdir, 'rh.func_result_highconf.annot')
@@ -430,23 +439,29 @@ class AphasiaTargetPlanner(Planner):
         # mri_surf2surf(subj, rh_func18_labels_file, 'fsaverage6', rh_fs6_func18_labels_file, 'rh')
         # rh_fs6_func18_labels = nib.load(rh_fs6_func18_labels_file).get_fdata().flatten()
 
+        ## rh FCN Confidence
+        rh_fs6_net12_confidence_file = os.path.join(parcellation18_dir, 'iter10_c25_w1', 'Iter_10_sm4', 'rh.NetworkConfidence_12_fs6.mgh')
+        rh_fs6_net12_confidence = nib.load(rh_fs6_net12_confidence_file).get_fdata().flatten()
+
         # lh Language Network A
-        lh_fs6_lna_idx = lh_fs6_func18_labels == 17
-        lh_fs6_lna_seed = np.mean(self.lh_surf_bold[lh_fs6_lna_idx, :], axis=0)
-        lh_lh_fs6_lna_fc = self.compute_surf_fc(lh_fs6_lna_seed, self.lh_surf_bold)
-        lh_rh_fs6_lna_fc = self.compute_surf_fc(lh_fs6_lna_seed, self.rh_surf_bold)
+        lh_fs6_FCN_idx = lh_fs6_func18_labels == 12
+        lh_fs6_FCN_seed = np.mean(self.lh_surf_bold[lh_fs6_FCN_idx, :], axis=0)
+        lh_lh_fs6_FCN_fc = self.compute_surf_fc(lh_fs6_FCN_seed, self.lh_surf_bold)
+        lh_rh_fs6_FCN_fc = self.compute_surf_fc(lh_fs6_FCN_seed, self.rh_surf_bold)
 
         # rh Language Network A
-        rh_fs6_lna_idx = rh_fs6_func18_labels == 17
-        rh_fs6_lna_seed = np.mean(self.rh_surf_bold[rh_fs6_lna_idx, :], axis=0)
-        rh_lh_fs6_lna_fc = self.compute_surf_fc(rh_fs6_lna_seed, self.lh_surf_bold)
-        rh_rh_fs6_lna_fc = self.compute_surf_fc(rh_fs6_lna_seed, self.rh_surf_bold)
+        rh_fs6_FCN_idx = rh_fs6_func18_labels == 12
+        rh_fs6_FCN_seed = np.mean(self.rh_surf_bold[rh_fs6_FCN_idx, :], axis=0)
+        rh_lh_fs6_FCN_fc = self.compute_surf_fc(rh_fs6_FCN_seed, self.lh_surf_bold)
+        rh_rh_fs6_FCN_fc = self.compute_surf_fc(rh_fs6_FCN_seed, self.rh_surf_bold)
 
         lh_sulc_weight = expit(3 * (self.lh_fs6_sulc + 1.5))
-        lh_fs6_lna_fc = (lh_lh_fs6_lna_fc + rh_lh_fs6_lna_fc) / 2
+        lh_fs6_FCN_fc = (lh_lh_fs6_FCN_fc + rh_lh_fs6_FCN_fc) / 2
         # lh_fs6_ifg_fc = (self.lh_lh_fs6_ifg_fc + self.rh_lh_fs6_ifg_fc) / 2
-        lh_fs6_ifg_fc = self.lh_lh_fs6_ifg_fc
-        lh_fs6_fusion_fc = ((lh_fs6_lna_fc + lh_fs6_ifg_fc) / 2) * lh_sulc_weight
+        # lh_fs6_ifg_fc = self.lh_lh_fs6_ifg_fc
+        # lh_fs6_fusion_fc = ((lh_fs6_FCN_fc + lh_fs6_ifg_fc) / 2) * lh_sulc_weight
+        lh_fs6_fusion_fc = lh_fs6_FCN_fc * lh_sulc_weight
+        lh_fs6_fusion_fc = lh_fs6_net12_confidence * lh_sulc_weight
 
         lh_fs6_fusion_fc_file = self.workdir / 'lh_fs6_fusion_fc.mgh'
         self.save_mgh(lh_fs6_fusion_fc, lh_fs6_fusion_fc_file)
@@ -457,10 +472,12 @@ class AphasiaTargetPlanner(Planner):
         self.lh_heatmap = lh_fusion_fc
 
         rh_sulc_weight = expit(3 * (self.rh_fs6_sulc + 1.5))
-        rh_fs6_lna_fc = (lh_rh_fs6_lna_fc + rh_rh_fs6_lna_fc) / 2
+        rh_fs6_FCN_fc = (lh_rh_fs6_FCN_fc + rh_rh_fs6_FCN_fc) / 2
         # rh_fs6_ifg_fc = (self.lh_rh_fs6_ifg_fc + self.rh_rh_fs6_ifg_fc) / 2
-        rh_fs6_ifg_fc = self.lh_rh_fs6_ifg_fc
-        rh_fs6_fusion_fc = ((rh_fs6_lna_fc + rh_fs6_ifg_fc) / 2) * rh_sulc_weight
+        # rh_fs6_ifg_fc = self.lh_rh_fs6_ifg_fc
+        # rh_fs6_fusion_fc = ((rh_fs6_FCN_fc + rh_fs6_ifg_fc) / 2) * rh_sulc_weight
+        rh_fs6_fusion_fc = rh_fs6_FCN_fc * rh_sulc_weight
+        rh_fs6_fusion_fc = rh_fs6_net12_confidence * rh_sulc_weight
 
         rh_fs6_fusion_fc_file = self.workdir / 'rh_fs6_fusion_fc.mgh'
         self.save_mgh(rh_fs6_fusion_fc, rh_fs6_fusion_fc_file)
@@ -638,14 +655,16 @@ class AphasiaTargetPlanner(Planner):
         ## create a dictionary to store the target information
         target_info_dict = {
             'name': subject,
-            'lh_Indi_Target_Indix': f'lh{int(lh_indi_target_index)}',
-            'rh_Indi_Target_Indix': f'rh{int(rh_indi_target_index)}',
+            'lh_Indi_Target_Index': f'lh{int(lh_indi_target_index)}',
+            'rh_Indi_Target_Index': f'rh{int(rh_indi_target_index)}',
             'lh_Indi_Target_Score': float(lh_indi_target_score),
             'rh_Indi_Target_Score': float(rh_indi_target_score),
             'lh_Indi_Target_surfRAS': f'{lh_target_surfRAS[0]:.2f},{lh_target_surfRAS[1]:.2f},{lh_target_surfRAS[2]:.2f}',
             'rh_Indi_Target_surfRAS': f'{rh_target_surfRAS[0]:.2f},{rh_target_surfRAS[1]:.2f},{rh_target_surfRAS[2]:.2f}',
             'lh_Indi_Target_volRAS': f'{lh_indi_target_volRAS[0]:.2f},{lh_indi_target_volRAS[1]:.2f},{lh_indi_target_volRAS[2]:.2f}',
             'rh_Indi_Target_volRAS': f'{rh_indi_target_volRAS[0]:.2f},{rh_indi_target_volRAS[1]:.2f},{rh_indi_target_volRAS[2]:.2f}',
+            'lh_Indi_Target_fsaverage6_Index': f'lh{int(lh_fs6_target_index)}',
+            'rh_Indi_Target_fsaverage6_Index': f'rh{int(rh_fs6_target_index)}',
             'lh_Indi_Target_Voxel_Coord_T1w_Space': f'{round(lh_indi_target_voxel_coord_T1w_space[0])},{round(lh_indi_target_voxel_coord_T1w_space[1])},{round(lh_indi_target_voxel_coord_T1w_space[2])}',
             'rh_Indi_Target_Voxel_Coord_T1w_Space': f'{round(rh_indi_target_voxel_coord_T1w_space[0])},{round(rh_indi_target_voxel_coord_T1w_space[1])},{round(rh_indi_target_voxel_coord_T1w_space[2])}',
             'lh_Indi_Target_Voxel_Coord_MNI_Space': f'{lh_fs6_target_surfRAS[0]:.2f},{lh_fs6_target_surfRAS[1]:.2f},{lh_fs6_target_surfRAS[2]:.2f}',
@@ -696,28 +715,6 @@ class AphasiaTargetPlanner(Planner):
         cmd = f'wb_command -show-scene {self.workdir}/parcellation18.scene 1 {figures_dir}/check_parcellation18.png 1200 800 > /dev/null 2>&1'
         os.system(cmd)
 
-        ## plot parcellation 213
-        ### 准备 213 parcellation labels
-        lh_fs6_parc213_file = os.path.join(self.workdir, 'lh_parc213_native_surf.mgh')
-        rh_fs6_parc213_file = os.path.join(self.workdir, 'rh_parc213_native_surf.mgh')
-        ### 转换为func.gii文件
-        cmd = f'mri_convert {lh_fs6_parc213_file} {self.workdir}/lh_parc213_native_surf.func.gii > /dev/null'
-        os.system(cmd)
-        cmd = f'mri_convert {rh_fs6_parc213_file} {self.workdir}/rh_parc213_native_surf.func.gii > /dev/null'
-        os.system(cmd)
-        ### 转换为label.gii文件
-        cmd = f'wb_command -metric-label-import {self.workdir}/lh_parc213_native_surf.func.gii {self.resource_dir}/Labels/parc213.label.txt {self.workdir}/lh_parc213_native_surf.label.gii -discard-others > /dev/null'
-        os.system(cmd)
-        cmd = f'wb_command -metric-label-import {self.workdir}/rh_parc213_native_surf.func.gii {self.resource_dir}/Labels/parc213.label.txt {self.workdir}/rh_parc213_native_surf.label.gii -discard-others > /dev/null'
-        os.system(cmd)
-        ### 截图
-        wb_view_scene_file = os.path.join(self.resource_dir, 'wb_view_scene', 'parcellation213.scene')
-        ### 复制到工作目录
-        shutil.copyfile(wb_view_scene_file, os.path.join(self.workdir, 'parcellation213.scene'))
-        ### 执行wb_view命令
-        cmd = f'wb_command -show-scene {self.workdir}/parcellation213.scene 1 {figures_dir}/check_parcellation213.png 1200 800 > /dev/null 2>&1'
-        os.system(cmd)
-
         ## 修改工作目录
         os.chdir(self.workdir)
 
@@ -736,7 +733,7 @@ class AphasiaTargetPlanner(Planner):
         cmd = f'wb_command -foci-create {lh_target_foci_file} -class lh_target {lh_target_info_file} lh.pial.surf.gii'
         os.system(cmd)
         #### 截图
-        wb_view_scene_file = os.path.join(self.resource_dir, 'wb_view_scene', 'lh_target_Aphasia.scene')
+        wb_view_scene_file = os.path.join(self.resource_dir, 'wb_view_scene', 'lh_target_Cognition.scene')
         ### 复制到工作目录
         shutil.copyfile(wb_view_scene_file, os.path.join(self.workdir, 'lh_target.scene'))
         ### 执行wb_view命令
@@ -773,7 +770,7 @@ class AphasiaTargetPlanner(Planner):
         cmd = f'wb_command -foci-create {rh_target_foci_file} -class rh_target {rh_target_info_file} rh.pial.surf.gii'
         os.system(cmd)
         #### 截图
-        wb_view_scene_file = os.path.join(self.resource_dir, 'wb_view_scene', 'rh_target_Aphasia.scene')
+        wb_view_scene_file = os.path.join(self.resource_dir, 'wb_view_scene', 'rh_target_Cognition.scene')
         ### 复制到工作目录
         shutil.copyfile(wb_view_scene_file, os.path.join(self.workdir, 'rh_target.scene'))
         ### 执行wb_view命令
@@ -808,7 +805,7 @@ class AphasiaTargetPlanner(Planner):
 
         figures_dict = {
             "Parcellation18_Figure": f"{subj_name}/{sess_name}/Figures/check_parcellation18.png",
-            "Parcellation213_Figure": f"{subj_name}/{sess_name}/Figures/check_parcellation213.png",
+            "Parcellation213_Figure": None,
             "Target_Figure": f"{subj_name}/{sess_name}/Figures/target_show_both.png",
         }
         self.figures_dict = figures_dict
@@ -824,7 +821,7 @@ class AphasiaTargetPlanner(Planner):
         self.lh_surf_bold = self.load_surf_bolds_DeepPrep(surf_bolds_path, 'lh')
         self.rh_surf_bold = self.load_surf_bolds_DeepPrep(surf_bolds_path, 'rh')
         self.__compute_candi_mask(postprocess_data_path, subj)
-        self.__compute_ifg_fc(postprocess_data_path, subj)
+        # self.__compute_ifg_fc(postprocess_data_path, subj)
         self.__compute_heatmap(postprocess_data_path, subj)
         self.__target_search(subj)
         self.__get_target_info(subj)

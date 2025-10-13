@@ -22,10 +22,10 @@ from glob import glob
 import matplotlib.pyplot as plt
 import seaborn as sns
 import sys
-# sys.path.append('/home/ssli/liss_workspace/Utilities_ss')
-from Utilities_ss import read_save_mgh as rsm
-from Utilities_ss import read_save_nii as rsn
-from Utilities_ss import convert
+
+from Utilities import read_save_mgh as rsm
+from Utilities import read_save_nii as rsn
+from Utilities import convert
 
 
 def compute_fc(seed, bold):

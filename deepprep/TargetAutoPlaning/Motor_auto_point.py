@@ -2,9 +2,9 @@ import os
 from pathlib import Path
 import zipfile
 import pandas as pd
-from TargetAutoPlaning import MotorTargetPlanner
+from TargetAutoPlaning_Core import MotorTargetPlanner
 
-from TargetAutoPlaning import parc213_DeepPrep, parcellation_18, parcellation_18_APP
+from TargetAutoPlaning_Core import parc213_DeepPrep, parcellation_18, parcellation_18_APP
 from glob import glob
 
 import argparse
@@ -13,7 +13,9 @@ import json
 
 import nibabel as nib
 import numpy as np
-from Utilities_ss import read_save_mgh as rsm
+from Utilities import read_save_mgh as rsm
+
+from contextlib import redirect_stdout
 
 def parse_arguments():
     parser = argparse.ArgumentParser(description="Process the paths for data, output, and reconall directories.")
@@ -133,7 +135,9 @@ def Aphasia_target_auto_planing_batch(data_path, output_path, reconall_dir, subj
                 # output_path_split = output_path.split('/')
                 # output_path_parcellation18 = '/'.join(output_path_split[:-1])
                 output_path_parcellation18 = output_path
-                return_value = parcellation_18_APP(data_path, output_path_parcellation18, subject, run)
+                with open(os.path.join(output_path_parcellation18, subject, run, 'parcellation_18_log.txt'), 'w') as f:
+                    with redirect_stdout(f):
+                        return_value = parcellation_18_APP(data_path, output_path_parcellation18, subject, run)
                 if return_value == 0:
                     break
                 ## 将18分区的结果复制到work_dir_run
@@ -225,7 +229,9 @@ def Aphasia_target_auto_planing_batch(data_path, output_path, reconall_dir, subj
                     # output_path_split = output_path.split('/')
                     # output_path_parcellation18 = '/'.join(output_path_split[:-1])
                     output_path_parcellation18 = output_path
-                    return_value = parcellation_18_APP(data_path, output_path_parcellation18, subject, run)
+                    with open(os.path.join(output_path_parcellation18, subject, run, 'parcellation_18_log.txt'), 'w') as f:
+                        with redirect_stdout(f):
+                            return_value = parcellation_18_APP(data_path, output_path_parcellation18, subject, run)
                     if return_value == 0:
                         break
                     ## 将18分区的结果复制到work_dir_run

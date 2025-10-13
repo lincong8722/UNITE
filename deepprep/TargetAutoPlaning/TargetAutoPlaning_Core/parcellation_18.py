@@ -23,10 +23,10 @@ from glob import glob
 # import matplotlib.pyplot as plt
 # import seaborn as sns
 # import sys
-# sys.path.append('/home/ssli/liss_workspace/Utilities_ss')
-from Utilities_ss import read_save_mgh as rsm
-# from Utilities_ss import convert
-from Utilities_ss import read_save_nii as rsn
+
+from Utilities import read_save_mgh as rsm
+
+from Utilities import read_save_nii as rsn
 
 def sm_confidence(sm, parc_path, subj, n_iter, n_parc, sess, hemi='lh'):
     
@@ -129,14 +129,7 @@ def write_confidence_to_annot_Gordon17_with_SCAN(smed_path, hemis = ['lh', 'rh']
         parc_path = os.path.join(smed_path, f'{hemi}.parc_result_highconf.annot')
         nib.freesurfer.write_annot(parc_path, high_conf_membershape, ctb, name)
 
-def load_data(d_path, sub, run, ext):
-    fs6_lh_data_path = d_path / f'{sub}/preprocess/{sub}/surf/lh.{sub}_bld{run}_rest_reorient_skip_faln_mc_g1000000000_bpss_resid{ext}'
-    fs6_lh_data = rsm.read_mgh(fs6_lh_data_path)
-    fs6_rh_data_path = d_path / f'{sub}/preprocess/{sub}/surf/rh.{sub}_bld{run}_rest_reorient_skip_faln_mc_g1000000000_bpss_resid{ext}'
-    fs6_rh_data = rsm.read_mgh(fs6_rh_data_path)
-    return fs6_lh_data, fs6_rh_data
-
-def parcellation_18(data_path, out_path, subject, sess, n_iter=10, conf=2.5, weight_group=1):
+def parcellation_18(data_path, out_path, subject, sess, n_iter=10, conf=2.5, weight_group=1, dummy_scans=4):
     res_path = os.path.join(out_path, f'{subject}/{sess}/Parcellation18/iter{n_iter}_c{int(conf*10)}_w{weight_group}')
     if not os.path.exists(res_path): os.makedirs(res_path)
 
@@ -155,8 +148,13 @@ def parcellation_18(data_path, out_path, subject, sess, n_iter=10, conf=2.5, wei
     if len(lh_data_path) == 0 or len(rh_data_path) == 0:
         print(f'No fs6 func data for {subject} {sess}. Please download it from the server.')
         return 0
-    lh_data = np.hstack([rsn.read_nii(d) for d in sorted(lh_data_path)])
-    rh_data = np.hstack([rsn.read_nii(d) for d in sorted(rh_data_path)])
+    
+    if dummy_scans > 0:
+        lh_data = np.hstack([rsn.read_nii(d)[:, dummy_scans:] for d in sorted(lh_data_path)])
+        rh_data = np.hstack([rsn.read_nii(d)[:, dummy_scans:] for d in sorted(rh_data_path)])
+    else:
+        lh_data = np.hstack([rsn.read_nii(d) for d in sorted(lh_data_path)])
+        rh_data = np.hstack([rsn.read_nii(d) for d in sorted(rh_data_path)])
     all_data = np.vstack([lh_data, rh_data])
     print(all_data.shape)
     # do parc
@@ -167,7 +165,7 @@ def parcellation_18(data_path, out_path, subject, sess, n_iter=10, conf=2.5, wei
     write_confidence_to_annot_Gordon17_with_SCAN(smed_dir, hemis=['lh', 'rh'])
     return 1
 
-def parcellation_18_APP(data_path, out_path, subject, sess, n_iter=10, conf=2.5, weight_group=1):
+def parcellation_18_APP(data_path, out_path, subject, sess, n_iter=10, conf=2.5, weight_group=1, dummy_scans=4):
     res_path = os.path.join(out_path, f'{subject}/{sess}/Parcellation18/iter{n_iter}_c{int(conf*10)}_w{weight_group}')
     if not os.path.exists(res_path): os.makedirs(res_path)
 
@@ -186,8 +184,13 @@ def parcellation_18_APP(data_path, out_path, subject, sess, n_iter=10, conf=2.5,
     if len(lh_data_path) == 0 or len(rh_data_path) == 0:
         print(f'No fs6 func data for {subject} {sess}. Please download it from the server.')
         return 0
-    lh_data = np.hstack([rsn.read_nii(d) for d in sorted(lh_data_path)])
-    rh_data = np.hstack([rsn.read_nii(d) for d in sorted(rh_data_path)])
+    
+    if dummy_scans > 0:
+        lh_data = np.hstack([rsn.read_nii(d)[:, dummy_scans:] for d in sorted(lh_data_path)])
+        rh_data = np.hstack([rsn.read_nii(d)[:, dummy_scans:] for d in sorted(rh_data_path)])
+    else:
+        lh_data = np.hstack([rsn.read_nii(d) for d in sorted(lh_data_path)])
+        rh_data = np.hstack([rsn.read_nii(d) for d in sorted(rh_data_path)])
     all_data = np.vstack([lh_data, rh_data])
     print(all_data.shape)
     # do parc
